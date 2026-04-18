@@ -8,7 +8,7 @@ Free, open source, local-first. No account, no cloud, no friction.
 
 ---
 
-![DashCal](assets/screenshot.png)
+![DashCal](assets/screenshot.jpg)
 
 ---
 
