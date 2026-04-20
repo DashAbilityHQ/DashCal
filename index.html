@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DashCal</title>
+  <script>
+    (function () {
+      var saved = Number(localStorage.getItem('dashcal-column-width'));
+      var width = (saved >= 160 && saved <= 600) ? Math.round(saved) : 300;
+      var r = document.documentElement;
+      r.style.setProperty('--column-width', width + 'px');
+      if (width <= 190) r.setAttribute('data-density', 'glance');
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231c1c1c'/%3E%3Ctext x='50%25' y='72%25' text-anchor='middle' font-family='Trebuchet MS, sans-serif' font-size='22' font-weight='500' fill='%23EAC96A'%3ED%3C/text%3E%3C/svg%3E"/>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-logo" aria-label="DashCal">
+        <img src="logo-darkmode.png" alt="DashAble logo" width="120">
+      </div>
+      <div class="calendar-selector">
+        <label>Calendar:</label>
+        <div class="calendar-selector-controls">
+          <button type="button" id="calendar-trigger" class="calendar-trigger"></button>
+          <div id="calendar-dropdown" class="calendar-dropdown"></div>
+          <button type="button" id="calendar-add-btn" class="calendar-add-btn" title="Add calendar">+</button>
+        </div>
+      </div>
+      <section class="mini-calendar-panel">
+        <header class="mini-calendar-header">
+          <button id="mini-prev" class="icon-btn" aria-label="Previous month">‹</button>
+          <h2 id="mini-month-label"></h2>
+          <button id="mini-next" class="icon-btn" aria-label="Next month">›</button>
+        </header>
+        <div id="mini-calendar" class="mini-calendar-grid"></div>
+      </section>
+
+      <section class="events-panel">
+        <div class="events-panel-header">
+          <h3>Upcoming Items</h3>
+          <button id="new-event-btn" class="primary-btn">+ Item</button>
+        </div>
+        <div class="events-search-wrap">
+          <input id="sidebar-search" type="search" placeholder="Search items…" />
+          <div class="search-options">
+            <label class="search-option-label">
+              <input type="checkbox" id="search-inc-past" />
+              <span>Inc past items</span>
+            </label>
+            <label class="search-option-label">
+              <input type="checkbox" id="search-inc-notes" />
+              <span>Inc notes</span>
+            </label>
+          </div>
+        </div>
+        <div class="palette-filter-header">
+          <h3>Filter by Palette</h3>
+          <button id="edit-palette-btn" class="btn-add-item">✎ Edit</button>
+        </div>
+        <div class="events-filter-bar">
+          <div id="event-filter-swatches" class="filter-grid"></div>
+        </div>
+        <div id="event-list" class="event-list"></div>
+      </section>
+    </aside>
+
+    <section class="main-pane">
+      <div class="canvas-toolbar">
+        <div id="toolbar-density-basic" class="density-group hidden" role="group" aria-label="Column width presets">
+          <button type="button" class="density-btn" data-width="220">Narrow</button>
+          <button type="button" class="density-btn" data-width="300">Normal</button>
+          <button type="button" class="density-btn" data-width="380">Wide</button>
+        </div>
+
+        <div id="toolbar-density-full" class="density-group" role="group" aria-label="Column width presets with glance">
+          <button type="button" class="density-btn" data-width="190">Glance</button>
+          <button type="button" class="density-btn" data-width="220">Narrow</button>
+          <button type="button" class="density-btn" data-width="300">Normal</button>
+          <button type="button" class="density-btn" data-width="380">Wide</button>
+        </div>
+        <button type="button" id="toolbar-show-hidden-btn" class="toolbar-icon-btn" aria-label="Show hidden days" title="Show hidden days">👁</button>
+        <div class="toolbar-history-group" role="group" aria-label="Undo and redo">
+          <button type="button" id="toolbar-undo-btn" class="toolbar-history-btn" aria-label="Undo">↩</button>
+          <button type="button" id="toolbar-redo-btn" class="toolbar-history-btn" aria-label="Redo">↪</button>
+        </div>
+        <div class="toolbar-right-group">
+          <button type="button" id="toolbar-settings-btn" class="toolbar-icon-btn" aria-label="Settings">⚙</button>
+          <button type="button" id="toolbar-later-btn" class="toolbar-later-btn hidden" aria-label="Show Later sidebar">Later</button>
+        </div>
+      </div>
+      <div id="month-header" class="month-header"></div>
+      <main class="main-canvas-wrap">
+        <div id="main-canvas" class="main-canvas"></div>
+      </main>
+      <div id="status-bar" class="status-bar">
+        <div class="status-bar-left">
+          <span id="status-storage-shield" class="status-shield hidden" title="Protects your data from being automatically cleared by the browser"></span>
+          <span id="status-export-nudge" class="status-export-nudge"></span>
+          <span id="status-install" class="status-install hidden">Install as app</span>
+          <span id="status-version" class="status-version"></span>
+        </div>
+        <div class="status-bar-right">
+          <span id="status-message" class="status-message"></span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="holding-sidebar" id="holding-sidebar">
+      <div class="holding-sidebar-header">
+        <button id="holding-hide-btn" class="holding-hide-btn" aria-label="Hide Later sidebar">›</button>
+        <span class="holding-sidebar-title">Later</span>
+        <button id="holding-new-event-btn" class="primary-btn">+ Item</button>
+      </div>
+      <div id="holding-event-list" class="holding-event-list"></div>
+    </aside>
+    </div>
+  </div>
+
+  <dialog id="event-dialog" class="event-dialog">
+    <div id="event-dialog-colour-bar">
+      <span id="event-dialog-colour-title"></span>
+    </div>
+    <form id="event-form" method="dialog" class="event-form">
+      <div class="event-form-inner">
+        <h3 id="event-dialog-title">New Item</h3>
+        <input type="hidden" id="event-id" />
+
+        <label>Title *
+          <input id="event-title" type="text" maxlength="120" required />
+        </label>
+        <label>Notes
+          <textarea id="event-notes" rows="3" maxlength="500"></textarea>
+        </label>
+
+        <div class="colour-controls">
+          <span class="colour-controls-label">Palette</span>
+          <div class="swatch-row-wrap">
+            <div class="swatch-row" id="swatch-row"></div>
+            <div class="palette-btn-col">
+              <button id="dialog-palette-btn" type="button" class="palette-open-btn" title="Edit Palette" aria-label="Edit Palette">✎</button>
+              <button id="dialog-colour-clear-btn" type="button" class="palette-open-btn palette-clear-btn" title="Clear colour" aria-label="Clear colour"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828l6.879-6.879zm.66 11.34L3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293l.16-.16z"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div class="date-time-row">
+          <div class="date-time-col">
+            <label>Date
+              <input id="event-date" type="date" />
+            </label>
+            <label class="inline-check">
+              <input id="event-all-day" type="checkbox" />
+              <span>All day</span>
+            </label>
+          </div>
+          <label id="event-time-row">Time
+            <input id="event-time" type="time" />
+          </label>
+        </div>
+      </div>
+
+      <menu class="dialog-actions">
+        <button id="push-event-btn" type="button" class="hidden">Push</button>
+        <button id="delete-event-btn" type="button" class="danger-btn hidden">Delete</button>
+        <button type="button" id="cancel-event-btn">Cancel</button>
+        <button type="submit" class="primary-btn">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="push-dialog" class="push-dialog">
+    <div class="push-dialog-wrap">
+      <h3>Push Item</h3>
+      <div class="push-form">
+        <div class="push-radio-group">
+          <label class="push-radio-label">
+            <input type="radio" name="push-scope" id="push-scope-single" value="single" checked />
+            <span>Push just this item</span>
+          </label>
+          <label class="push-radio-label">
+            <input type="radio" name="push-scope" id="push-scope-subsequent" value="subsequent" />
+            <span>Push all subsequent items</span>
+          </label>
+        </div>
+        <label class="push-days-label">
+          Days to push
+          <input type="number" id="push-days" value="1" min="1" />
+        </label>
+      </div>
+      <menu class="dialog-actions">
+        <button type="button" id="push-cancel-btn">Cancel</button>
+        <button type="button" id="push-confirm-btn" class="primary-btn">Push</button>
+      </menu>
+    </div>
+  </dialog>
+
+  <dialog id="palette-dialog" class="palette-dialog">
+    <div class="palette-dialog-wrap">
+      <header class="palette-dialog-header">
+        <h3>Edit Palette</h3>
+        <div class="palette-header-actions">
+          <button id="palette-close-btn" type="button">Close</button>
+        </div>
+      </header>
+      <div id="palette-slot-grid" class="palette-slot-grid"></div>
+      <section class="working-week-section">
+        <h4>Working Week</h4>
+        <div class="working-week-grid" id="working-week-grid"></div>
+      </section>
+      <div class="palette-footer">
+        <div class="palette-footer-group">
+          <h4>Appearance</h4>
+          <div class="density-group appearance-group" role="group" aria-label="Theme selection">
+            <button type="button" class="density-btn theme-btn" data-theme-mode="dark">Dark</button>
+            <button type="button" class="density-btn theme-btn" data-theme-mode="light">Light</button>
+            <button type="button" class="density-btn theme-btn" data-theme-mode="system">System</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="advanced-section">
+        <button type="button" id="advanced-toggle-btn" class="advanced-toggle-btn">Advanced ▾</button>
+        <div id="advanced-body" class="advanced-body collapsed">
+          <div class="seed-data-row" id="seed-data-row"></div>
+          <div class="import-export-row" id="import-export-row"></div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <input id="ics-file-input" type="file" accept=".ics,text/calendar" class="hidden" />
+  <input id="sql-file-input" type="file" accept=".sql" class="hidden" />
+  <input id="db-file-input" type="file" accept=".db,.sqlite" class="hidden" />
+
+  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.11.0/dist/sql-wasm.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
